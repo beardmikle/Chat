@@ -1,16 +1,21 @@
-//
-//  ContentView.swift
+ 
 //  Chat
 //
 //  Created by beardmikle on 10.05.2023.
 //
 
 import SwiftUI
+import Firebase
 
-struct ContentView: View {
+struct LoginView: View {
     @State var isLoginMode = false
     @State var email = ""
     @State var password = ""
+    
+    init() {
+        FirebaseApp.configure()
+    }
+    
     
     var body: some View {
         NavigationView {
@@ -50,7 +55,7 @@ struct ContentView: View {
   
                     
                     Button {
-                        
+                        handleAction()
                     } label: {
                         HStack
                         {
@@ -73,6 +78,7 @@ struct ContentView: View {
                 .ignoresSafeArea())
             
         }
+        .navigationViewStyle(StackNavigationViewStyle())
   
     }
     
@@ -87,6 +93,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        LoginView()
     }
 }
