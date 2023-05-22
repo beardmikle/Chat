@@ -6,10 +6,20 @@
 //
 
 import SwiftUI
+import Firebase
+import FirebaseStorage
+import FirebaseAuth
+import FirebaseFirestore
+
+
+struct ChatUser {
+    let uid, email, profileImageUrl: String
+}
 
 class MainMessagesViewModel: ObservableObject {
     
     @Published var errorMessage = ""
+    @Published var chatUser: ChatUser?
     
     init() {
         fetchCurrentUser()
@@ -17,17 +27,41 @@ class MainMessagesViewModel: ObservableObject {
     
     private func fetchCurrentUser() {
         
-        self.errorMessage = "Fetching current user"
-        
-        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else {return}
-        
-        FirebaseManager.shared.firestore.collection("users").document(uid).getDocument { snapshot, error in if let error = error {
-            print("Failed to fetch current user. Error log:" , error)
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid
+        else {
+            self.errorMessage = "Coild not find firebase uid"
             return
         }
-            guard let data = snapshot?.data() else {return}
-            print(data)
+
+
+        FirebaseManager.shared.firestore.collection("users").document(uid).getDocument { snapshot, error in if let error = error {
+                self.errorMessage = "Failed to fetch current user: \(error)"
+                print("Failed to fetch current user. Error log:", error)
+                return
+            
         }
+            
+            guard let data = snapshot?.data() else {
+                self.errorMessage = "No data found"
+                return
+                
+            }
+
+            
+        //            self.errorMessage = "Data: \(data.description)"
+            let uid = data["uid"] as? String ?? "uid-problem"
+            let email = data["email"] as? String ?? "emeail-problem"
+            let profileImageUrl = data["profileImageUrl"] as? String ?? "profileImageUrl-problem"
+            let chatUser = ChatUser(uid: uid, email: email, profileImageUrl: profileImageUrl)
+            
+        //            self.errorMessage = chatUser.profileImageUrl
+            
+        }
+
+        
+        
+        
+
     }
 }
 
@@ -42,7 +76,7 @@ struct MainMessagesView: View {
 
             VStack {
                 
-                Text("Current user ID:")
+                Text("Current user ID: \(vm.errorMessage)")
                 
                 customNavBar
                 messageView
