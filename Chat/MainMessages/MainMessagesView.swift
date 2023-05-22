@@ -14,6 +14,7 @@ import FirebaseFirestore
 
 struct ChatUser {
     let uid, email, profileImageUrl: String
+    let sub: String
 }
 
 class MainMessagesViewModel: ObservableObject {
@@ -52,18 +53,23 @@ class MainMessagesViewModel: ObservableObject {
             let uid = data["uid"] as? String ?? "uid-problem"
             let email = data["email"] as? String ?? "emeail-problem"
             let profileImageUrl = data["profileImageUrl"] as? String ?? "profileImageUrl-problem"
-            let chatUser = ChatUser(uid: uid, email: email, profileImageUrl: profileImageUrl)
+            
+            let index = email.range(of: "@")?.lowerBound //delete email before @
+            let sub = email[..<index!] //delete email before @
+    
+            
+            self.chatUser = ChatUser(uid: uid, email: email, profileImageUrl: profileImageUrl, sub: String(sub))
             
         //            self.errorMessage = chatUser.profileImageUrl
+
+        
+            
+            }
             
         }
 
-        
-        
-        
-
     }
-}
+
 
 struct MainMessagesView: View {
     
@@ -76,7 +82,7 @@ struct MainMessagesView: View {
 
             VStack {
                 
-                Text("Current user ID: \(vm.errorMessage)")
+//                Text("Current user: \(vm.chatUser?.uid ?? "")")
                 
                 customNavBar
                 messageView
@@ -97,7 +103,7 @@ struct MainMessagesView: View {
                 .foregroundColor(Color(.systemGreen))
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("USERNAME")
+                Text("\(vm.chatUser?.sub ?? "")")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(Color(.systemBlue))
                 
