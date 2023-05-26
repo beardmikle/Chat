@@ -1,5 +1,5 @@
 # Chat  📲
------------------
+
 Application with chat features. Uses features such as:
 
 - authorization through FireStore database
@@ -12,7 +12,7 @@ Some screenshots:
 
 
 
-A small video of the gameplay:
+A small video:
 -----------------
 
 
