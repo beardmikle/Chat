@@ -10,6 +10,7 @@ import Firebase
 import FirebaseStorage
 import FirebaseAuth
 import FirebaseFirestore
+import SDWebImageSwiftUI
 
 
 struct ChatUser {
@@ -54,16 +55,19 @@ class MainMessagesViewModel: ObservableObject {
             let email = data["email"] as? String ?? "emeail-problem"
             let profileImageUrl = data["profileImageUrl"] as? String ?? "profileImageUrl-problem"
             
-            let index = email.range(of: "@")?.lowerBound //delete email before @
-            let sub = email[..<index!] //delete email before @
+            let index = email.range(of: "@")?.lowerBound //my version delete email before "@"
+            let sub = email[..<index!] //delete email before "@"
     
             
             self.chatUser = ChatUser(uid: uid, email: email, profileImageUrl: profileImageUrl, sub: String(sub))
             
+            
+//            default version gmail email delete string
+//            self.chatUser = ChatUser(uid: uid, email: email.replacingOccurrences(of: "@gmail.com", with: ""), profileImageUrl: profileImageUrl, sub: String(sub))
+            
+            
         //            self.errorMessage = chatUser.profileImageUrl
 
-        
-            
             }
             
         }
@@ -98,14 +102,25 @@ struct MainMessagesView: View {
         
         HStack(spacing: 16) {
             
-            Image(systemName: "person.fill")
-                .font(.system(size: 24, weight: .heavy))
-                .foregroundColor(Color(.systemGreen))
+            WebImage(url: URL(string: vm.chatUser?.profileImageUrl ?? ""))
+                .resizable()
+                .scaledToFill()
+                .frame(width: 55, height: 55)
+                .clipped()
+                .cornerRadius(55)
+                .overlay(RoundedRectangle(cornerRadius: 55)
+                    .stroke(Color.green, lineWidth: 1))
+                .shadow(radius: 8)
+            
+//            default avatar
+//            Image(systemName: "person.fill")
+//                .font(.system(size: 24, weight: .heavy))
+//                .foregroundColor(Color(.systemGreen))
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(vm.chatUser?.sub ?? "")")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(Color(.systemBlue))
+                    .foregroundColor(Color(.systemGreen))
                 
                 HStack {
                     Circle()
