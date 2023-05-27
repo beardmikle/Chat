@@ -4,7 +4,7 @@ Application with chat features. Uses features such as:
 
 - authorization through FireStore database
 - using Firebase Storage to store data and avatars
-- 
+- SDWebImageSwiftUI package
 
 Some screenshots:
 -----------------
