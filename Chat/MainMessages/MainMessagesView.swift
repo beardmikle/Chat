@@ -12,22 +12,23 @@ import FirebaseAuth
 import FirebaseFirestore
 import SDWebImageSwiftUI
 
-
-struct ChatUser {
-    let uid, email, profileImageUrl: String
-    let sub: String
-}
-
 class MainMessagesViewModel: ObservableObject {
     
     @Published var errorMessage = ""
     @Published var chatUser: ChatUser?
     
     init() {
+        
+        DispatchQueue.main.async {
+            self.isUserCurrentlyLoggedOut =
+            FirebaseManager.shared.auth.currentUser?.uid == nil
+        }
+        
+    
         fetchCurrentUser()
     }
     
-    private func fetchCurrentUser() {
+    func fetchCurrentUser() {
         
         guard let uid = FirebaseManager.shared.auth.currentUser?.uid
         else {
@@ -49,24 +50,8 @@ class MainMessagesViewModel: ObservableObject {
                 
             }
 
+            self.chatUser = .init(data: data)
             
-        //            self.errorMessage = "Data: \(data.description)"
-            let uid = data["uid"] as? String ?? "uid-problem"
-            let email = data["email"] as? String ?? "emeail-problem"
-            let profileImageUrl = data["profileImageUrl"] as? String ?? "profileImageUrl-problem"
-            
-            let index = email.range(of: "@")?.lowerBound //my version delete email before "@"
-            let sub = email[..<index!] //delete email before "@"
-    
-            
-            self.chatUser = ChatUser(uid: uid, email: email, profileImageUrl: profileImageUrl, sub: String(sub))
-            
-            
-//            default version gmail email delete string
-//            self.chatUser = ChatUser(uid: uid, email: email.replacingOccurrences(of: "@gmail.com", with: ""), profileImageUrl: profileImageUrl, sub: String(sub))
-            
-            
-        //            self.errorMessage = chatUser.profileImageUrl
 
             }
             
@@ -76,6 +61,7 @@ class MainMessagesViewModel: ObservableObject {
     
     func handleSignOut() {
         isUserCurrentlyLoggedOut.toggle()
+        try? FirebaseManager.shared.auth.signOut()
     }
     
 }
@@ -141,7 +127,7 @@ struct MainMessagesView: View {
             Spacer()
             Button {
                 shouldShowLogOutOptions.toggle()
-                print("test gear")
+                print("print gear")
             } label: {
                 Image(systemName: "gear")
                     .font(.system(size: 30, weight: .bold))
@@ -160,7 +146,10 @@ struct MainMessagesView: View {
             ])
         }
         .fullScreenCover(isPresented: $vm.isUserCurrentlyLoggedOut, onDismiss: nil) {
-            LoginView()
+            LoginView(didCompleteLoginProcess: {
+                self.vm.isUserCurrentlyLoggedOut = false
+                self.vm.fetchCurrentUser()
+            })
         }
         
     }
@@ -178,6 +167,7 @@ struct MainMessagesView: View {
                                 .stroke(Color.blue, lineWidth: 1)
                                      
                             )
+                            .padding(.top, 1)
                         
                         VStack(alignment: .leading) {
                             Text("Username")
@@ -201,6 +191,7 @@ struct MainMessagesView: View {
             
         }.padding(.bottom, 50)
     }
+        
     
     private var newMessageButton: some View {
         Button {
@@ -225,7 +216,8 @@ struct MainMessagesView: View {
         static var previews: some View {
             
             MainMessagesView()
-                .preferredColorScheme(.dark)
+//            dark theme
+//                .preferredColorScheme(.dark)
             
             MainMessagesView()
         }
