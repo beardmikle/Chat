@@ -193,9 +193,13 @@ struct MainMessagesView: View {
     }
         
     
+    @State var shouldShowNewMeassage = false
+    
     private var newMessageButton: some View {
         Button {
-            print("test")
+            
+            shouldShowNewMeassage.toggle()
+            
         } label: {
             HStack {
                 Spacer()
@@ -210,6 +214,8 @@ struct MainMessagesView: View {
             .padding(.horizontal)
             .shadow(radius: 15)
         }
+        .fullScreenCover(isPresented: $shouldShowNewMeassage) {
+            CreateNewMessageView()        }
     }
     
     struct MainMessagesView_Previews: PreviewProvider {
