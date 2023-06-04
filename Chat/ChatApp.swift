@@ -13,7 +13,7 @@ struct ChatApp: App {
         WindowGroup {
 //            LoginView()
             MainMessagesView()
-                .preferredColorScheme(.dark)
+//                .preferredColorScheme(.dark)
         }
     }
 }

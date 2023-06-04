@@ -101,7 +101,7 @@ struct MainMessagesView: View {
                 .clipped()
                 .cornerRadius(55)
                 .overlay(RoundedRectangle(cornerRadius: 55)
-                    .stroke(Color.green, lineWidth: 1))
+                    .stroke(Color.green, lineWidth: 3))
                 .shadow(radius: 8)
             
             //            default avatar
