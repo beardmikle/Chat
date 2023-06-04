@@ -6,11 +6,11 @@ Application with chat features. Uses features such as:
 - using Firebase Storage to store data and avatars
 - SDWebImageSwiftUI package
 
-import Firebase
-import FirebaseStorage
-import FirebaseAuth
-import FirebaseFirestore
-import SDWebImageSwiftUI
+- import Firebase
+- import FirebaseStorage
+- import FirebaseAuth
+- import FirebaseFirestore
+- import SDWebImageSwiftUI
 
 
 Some screenshots:
@@ -23,3 +23,4 @@ A small video:
 -----------------
 
 
+ 
