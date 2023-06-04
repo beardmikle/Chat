@@ -6,6 +6,13 @@ Application with chat features. Uses features such as:
 - using Firebase Storage to store data and avatars
 - SDWebImageSwiftUI package
 
+import Firebase
+import FirebaseStorage
+import FirebaseAuth
+import FirebaseFirestore
+import SDWebImageSwiftUI
+
+
 Some screenshots:
 -----------------
 ![1](https://github.com/beardmikle/Chat/assets/11380960/6451f4da-afce-4c52-b596-0151b2a9c7d4)
