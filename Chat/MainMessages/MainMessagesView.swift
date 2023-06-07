@@ -71,23 +71,25 @@ struct MainMessagesView: View {
     
     @State var shouldShowLogOutOptions = false
     
+    @State var shouldNavigateToChatLogView = false
+    
     @ObservedObject private var vm = MainMessagesViewModel()
     
     var body: some View {
         NavigationView {
             
             VStack {
-                
-                //                Text("Current user: \(vm.chatUser?.uid ?? "")")
-                
                 customNavBar
                 messageView
+                
+                NavigationLink("", isActive: $shouldNavigateToChatLogView) {
+                    ChatLogView(chatUser: self.chatUser)
+                }
                 
             }
             .overlay(
                 newMessageButton, alignment: .bottom).navigationBarHidden(true)
         }
-        
     }
     
     private var customNavBar: some View {
@@ -157,35 +159,43 @@ struct MainMessagesView: View {
     private var messageView: some View {
         ScrollView {
             ForEach(0..<10, id: \.self) { num in
-                VStack {
-                    HStack(spacing: 16) {
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 32))
-                            .padding(8)
-                            .foregroundColor(Color(.systemBlue))
-                            .overlay(RoundedRectangle(cornerRadius: 44)
-                                .stroke(Color.blue, lineWidth: 1)
-                                     
-                            )
-                            .padding(.top, 1)
-                        
-                        VStack(alignment: .leading) {
-                            Text("Username")
-                                .font(.system(size:16, weight: .bold))
-                            Text("Message sent to user")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(.lightGray))
-                        }
-                        
-                        Spacer()
-                        
-                        Text("22d")
-                            .font(.system(size:14, weight: .semibold))
-                    }
-                    Divider()
-                        .padding(.vertical, 8)
+                
+                NavigationLink {
+                    Text("Destination")
                     
-                }.padding(.horizontal)
+                } label: {
+                    VStack {
+                        HStack(spacing: 16) {
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 32))
+                                .padding(8)
+                                .foregroundColor(Color(.systemBlue))
+                                .overlay(RoundedRectangle(cornerRadius: 44)
+                                    .stroke(Color.blue, lineWidth: 1)
+                                         
+                                )
+                                .padding(.top, 1)
+                            
+                            VStack(alignment: .leading) {
+                                Text("Username")
+                                    .font(.system(size:16, weight: .bold))
+                                Text("Message sent to user")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(.lightGray))
+                            }
+                            
+                            Spacer()
+                            
+                            Text("22d")
+                                .font(.system(size:14, weight: .semibold))
+                        }
+                        Divider()
+                            .padding(.vertical, 8)
+                        
+                    }.padding(.horizontal)
+                }
+
+        
                 
             }
             
@@ -215,17 +225,31 @@ struct MainMessagesView: View {
             .shadow(radius: 15)
         }
         .fullScreenCover(isPresented: $shouldShowNewMeassage) {
-            CreateNewMessageView()        }
-    }
-    
-    struct MainMessagesView_Previews: PreviewProvider {
-        static var previews: some View {
+            // NAVIGATION
+            CreateNewMessageView(didSelectNewUser: {
+                user in
+                print(user.email)
+                // NAVIGATION TOGGLE
+                self.shouldNavigateToChatLogView.toggle()
+                self.chatUser = user
+            })
             
-            MainMessagesView()
+        }
+    }
+        
+        @State var chatUser: ChatUser?
+}
+    
+
+
+
+struct MainMessagesView_Previews: PreviewProvider {
+    static var previews: some View {
+        
+        MainMessagesView()
 //            dark theme
 //                .preferredColorScheme(.dark)
-            
-            MainMessagesView()
-        }
+        
+        MainMessagesView()
     }
 }

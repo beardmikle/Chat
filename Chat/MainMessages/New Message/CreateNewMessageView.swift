@@ -31,16 +31,19 @@ class CreateNewMessageViewModel: ObservableObject {
                     let user = ChatUser(data: data)
                     if user.uid != FirebaseManager.shared.auth.currentUser?.uid {
                         self.users.append(.init(data: data))
+        
                     }
+
                     
                 })
                 
-//                self.errorMessage = "Fetched users successfully"
             }
     }
 }
 
 struct CreateNewMessageView: View {
+    
+    let didSelectNewUser: (ChatUser) -> ()
     
     @Environment(\.presentationMode) var presentationMode
     
@@ -52,21 +55,29 @@ struct CreateNewMessageView: View {
                 Text(vm.errorMessage)
                 
                 ForEach(vm.users) { user in
-                    HStack {
-                        WebImage(url: URL(string: user.profileImageUrl))
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 55, height: 55)
-                            .clipped()
-                            .cornerRadius(55)
-                            .overlay(RoundedRectangle(cornerRadius: 55)
-                                .stroke(Color.green, lineWidth: 3))
-                            .shadow(radius: 8)
-                        Text(user.email)
-                        Spacer()
-                    }.padding(.horizontal)
+                    Button {
+                        presentationMode.wrappedValue.dismiss()
+                        didSelectNewUser(user)
+                    } label: {
+                        HStack {
+                            WebImage(url: URL(string: user.profileImageUrl))
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 55, height: 55)
+                                .clipped()
+                                .cornerRadius(55)
+                                .overlay(RoundedRectangle(cornerRadius: 55)
+                                    .stroke(Color.green, lineWidth: 3))
+                                .shadow(radius: 8)
+                            Text(user.email)
+                                .foregroundColor(Color(.label))
+                            Spacer()
+                        }.padding(.horizontal)
+
+                    }
                     Divider()
                         .padding(.vertical, 1)
+
                 }
             } .navigationTitle("+ New Message")
                 .toolbar {
