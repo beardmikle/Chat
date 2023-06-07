@@ -14,14 +14,17 @@ struct ChatLogView: View {
     @State var chatText = ""
     
     var body: some View {
-        VStack {
+        ZStack {
             messagesView
-            
-            chatBottomBar
-            
-                .navigationTitle(chatUser?.email ?? "")
-                    .navigationBarTitleDisplayMode(.inline)
-        }
+                VStack(spacing: 0) {
+                    Spacer()
+                    chatBottomBar
+                        .background(Color.white)
+                }
+            }
+            .navigationTitle(chatUser?.email ?? "")
+                .navigationBarTitleDisplayMode(.inline)
+
     }
     
     private var messagesView: some View {
