@@ -11,13 +11,23 @@ class ChatLogViewModel: ObservableObject {
     
     @Published var chatText = ""
     
-    init() {
-        
+    let chatUser: ChatUser?
+    
+    init(chatUser: ChatUser?) {
+        self.chatUser = chatUser
     }
     
     func handleSend() {
         print(chatText)
+        guard let fromId = FirebaseManager.shared.auth.currentUser?.uid else { return }
         
+        guard let toId = chatUser?.uid else { return }
+        
+        FirebaseManager.shared.firestore
+            .collection("messages")
+            .document(fromId)
+            .collection(toId)
+            .document()
     }
 }
 
@@ -26,8 +36,13 @@ struct ChatLogView: View {
     
     let chatUser: ChatUser?
     
+    init(chatUser: ChatUser?) {
+        self.chatUser = chatUser
+        self.vm = .init(chatUser: chatUser)
+    }
     
-    @ObservedObject var vm = ChatLogViewModel()
+    
+    @ObservedObject var vm = ChatLogViewModel
     
     var body: some View {
         messagesView
@@ -106,5 +121,13 @@ private struct DescriptionPlaceholder: View {
                 .padding(.top, -4)
             Spacer()
         }
+    }
+}
+
+
+struct ChatLogView_Previews: PreviewProvider {
+    static var previews: some View {
+
+        MainMessagesView()
     }
 }
