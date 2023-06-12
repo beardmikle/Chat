@@ -8,16 +8,66 @@
 import SwiftUI
 import Firebase
 
+
+struct FirebaseConstants {
+    static let fromId = "fromId"
+    static let toId = "toId"
+    static let text = "text"
+}
+
+struct ChatMessage: Identifiable {
+    
+    var id: String { documentId }
+    
+    let documentId: String
+    let fromId, toId, text: String
+        
+    init(documentId: String, data: [String: Any]) {
+        self.documentId = documentId
+        self.fromId = data[FirebaseConstants.fromId] as? String ?? ""
+        self.toId = data[FirebaseConstants.toId] as? String ?? ""
+        self.text = data[FirebaseConstants.text] as? String ?? ""
+    }
+}
+
 class ChatLogViewModel: ObservableObject {
     
     @Published var chatText = ""
     @Published var errorMessage = ""
     
+    @Published var chatMessages = [ChatMessage]()
     
     let chatUser: ChatUser?
     
     init(chatUser: ChatUser?) {
         self.chatUser = chatUser
+        
+        fetchMessages()
+    }
+    
+    private func fetchMessages() {
+        guard let fromId = FirebaseManager.shared.auth.currentUser?.uid else { return }
+        
+        guard let toId = chatUser?.uid else { return }
+        
+        FirebaseManager.shared.firestore
+            .collection("messages")
+            .document(fromId)
+            .collection(toId)
+            .addSnapshotListener { querySnapshot, error in
+                if let error = error {
+                    self.errorMessage = "Failed to listen for messages: \(error)"
+                    print(error)
+                    return
+                }
+                querySnapshot?.documents.forEach({ queryDocumentSnapshot in
+                    let data = queryDocumentSnapshot.data()
+                    let docId = queryDocumentSnapshot.documentID
+                    self.chatMessages.append(.init(documents: docId, data:data))
+                })
+                
+            }
+            
     }
     
     func handleSend() {
@@ -32,7 +82,7 @@ class ChatLogViewModel: ObservableObject {
             .collection(toId)
             .document()
         
-        let messageData = ["fromId": fromId, "toId": toId, "text": self.chatText, "timestamp": Timestamp()] as [String : Any]
+        let messageData = [FirebaseConstants.fromId: fromId, FirebaseConstants.toId: toId, FirebaseConstants.text: self.chatText, "timestamp": Timestamp()] as [String : Any]
         
         document.setData(messageData) { error in
             if let error = error {
@@ -87,11 +137,14 @@ struct ChatLogView: View {
         VStack {
             
                 ScrollView {
-                    ForEach(0..<22) { num in
+                    ForEach(vm.chatMessages) { message in
+//                        Text(message.text)
+//                    }
+//                    ForEach(0..<22) { num in
                             HStack {
                                 Spacer()
                                 HStack {
-                                    Text("Fake MESS NOW")
+                                    Text(message.text)
                                         .foregroundColor(.white)
                                 }
                                 .padding()
