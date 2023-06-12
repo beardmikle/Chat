@@ -54,18 +54,20 @@ class ChatLogViewModel: ObservableObject {
             .collection("messages")
             .document(fromId)
             .collection(toId)
+            .order(by: "timestamp")
             .addSnapshotListener { querySnapshot, error in
                 if let error = error {
                     self.errorMessage = "Failed to listen for messages: \(error)"
                     print(error)
                     return
                 }
-                querySnapshot?.documents.forEach({ queryDocumentSnapshot in
-                    let data = queryDocumentSnapshot.data()
-                    let docId = queryDocumentSnapshot.documentID
-                    self.chatMessages.append(.init(documents: docId, data:data))
-                })
                 
+                querySnapshot?.documentChanges.forEach({ change in
+                    if change.type == .added {
+                        let data = change.document.data()
+                        self.chatMessages.append(.init(documentId: change.document.documentID, data:data))
+                    }
+                })
             }
             
     }
@@ -138,22 +140,33 @@ struct ChatLogView: View {
             
                 ScrollView {
                     ForEach(vm.chatMessages) { message in
-//                        Text(message.text)
-//                    }
-//                    ForEach(0..<22) { num in
-                            HStack {
-                                Spacer()
+                        VStack {
+                            if message.fromId == FirebaseManager.shared.auth.currentUser?.uid {
                                 HStack {
-                                    Text(message.text)
-                                        .foregroundColor(.white)
+                                    Spacer()
+                                    HStack {
+                                        Text(message.text)
+                                            .foregroundColor(.white)
+                                    }
+                                    .padding()
+                                    .background(Color.blue)
+                                    .cornerRadius(15)
                                 }
-                                .padding()
-                                .background(Color.blue)
-                                .cornerRadius(15)
+                            } else {
+                                HStack {
+                                    HStack {
+                                        Text(message.text)
+                                            .foregroundColor(.black)
+                                    }
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(15)
+                                    Spacer()
+                                }
+
                             }
-                            .padding(.horizontal)
-                            .padding(.top, 8)
                         }
+                    }
                     
                     HStack { Spacer() }
                     }
