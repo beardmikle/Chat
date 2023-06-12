@@ -76,15 +76,19 @@ struct MainMessagesView: View {
     @ObservedObject private var vm = MainMessagesViewModel()
     
     var body: some View {
-        NavigationView {
+//        NavigationLink {
+    
+        NavigationStack {
             
             VStack {
                 customNavBar
                 messageView
                 
-                NavigationLink("", isActive: $shouldNavigateToChatLogView) {
+//                NavigationLink("", isActive: $shouldNavigateToChatLogView) {
+//                    ChatLogView(chatUser: self.chatUser)
+                
+            } .navigationDestination(isPresented: $shouldNavigateToChatLogView) {
                     ChatLogView(chatUser: self.chatUser)
-                }
                 
             }
             .overlay(
