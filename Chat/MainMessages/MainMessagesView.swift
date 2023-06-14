@@ -26,6 +26,42 @@ class MainMessagesViewModel: ObservableObject {
         
     
         fetchCurrentUser()
+        
+        fetchRecentMessages()
+    }
+    
+    @Published var recentMessages = [RecentMessage]()
+    
+    private func fetchRecentMessages() {
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
+        
+        FirebaseManager.shared.firestore
+            .collection("recent_message")
+            .document(uid)
+            .collection("messages")
+            .order(by: "timestamp")
+            .addSnapshotListener { querySnapshot, error in
+                if let error = error {
+                    self.errorMessage = "FAIL! Failed to listen for recent message: \(error)"
+                    print(error)
+                    return
+                }
+                
+                querySnapshot?.documentChanges.forEach({ change in
+                    let docId = change.document.documentID
+                    
+                    if let index = self.recentMessages.firstIndex(where: { rm in
+                        return rm.documentId == docId
+                    }) {
+                        self.recentMessages.remove(at: index)
+                    }
+                    self.recentMessages.insert(.init(documentId: docId, data: change.document.data()), at: 0)
+                    
+//                    self.recentMessages.append()
+
+                })
+                
+            }
     }
     
     func fetchCurrentUser() {
@@ -162,7 +198,7 @@ struct MainMessagesView: View {
     
     private var messageView: some View {
         ScrollView {
-            ForEach(0..<10, id: \.self) { num in
+            ForEach(vm.recentMessages) { recentMessage in
                 
                 NavigationLink {
                     Text("Destination")
@@ -170,22 +206,25 @@ struct MainMessagesView: View {
                 } label: {
                     VStack {
                         HStack(spacing: 16) {
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 32))
-                                .padding(8)
-                                .foregroundColor(Color(.systemBlue))
-                                .overlay(RoundedRectangle(cornerRadius: 44)
-                                    .stroke(Color.blue, lineWidth: 1)
-                                         
-                                )
+                            WebImage(url: URL(string: recentMessage.profileImageUrl))
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 64, height: 64)
+                                .clipped()
+                                .cornerRadius(64)
                                 .padding(.top, 1)
+                                .overlay(RoundedRectangle(cornerRadius: 64)
+                                    .stroke(Color.blue, lineWidth: 1))
+                                .shadow(radius: 5)
                             
-                            VStack(alignment: .leading) {
-                                Text("Username")
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(recentMessage.email)
                                     .font(.system(size:16, weight: .bold))
-                                Text("Message sent to user")
+                                    .foregroundColor(Color(.label))
+                                Text(recentMessage.text)
                                     .font(.system(size: 14))
-                                    .foregroundColor(Color(.lightGray))
+                                    .foregroundColor(Color(.darkGray))
+                                    .multilineTextAlignment(.leading)
                             }
                             
                             Spacer()

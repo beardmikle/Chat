@@ -9,12 +9,6 @@ import SwiftUI
 import Firebase
 
 
-struct FirebaseConstants {
-    static let fromId = "fromId"
-    static let toId = "toId"
-    static let text = "text"
-}
-
 struct ChatMessage: Identifiable {
     
     var id: String { documentId }
@@ -54,7 +48,7 @@ class ChatLogViewModel: ObservableObject {
             .collection("messages")
             .document(fromId)
             .collection(toId)
-            .order(by: "timestamp")
+            .order(by: FirebaseConstants.timestamp)
             .addSnapshotListener { querySnapshot, error in
                 if let error = error {
                     self.errorMessage = "Failed to listen for messages: \(error)"
@@ -68,6 +62,10 @@ class ChatLogViewModel: ObservableObject {
                         self.chatMessages.append(.init(documentId: change.document.documentID, data:data))
                     }
                 })
+                DispatchQueue.main.async {
+                    self.count += 1
+                }
+                
             }
             
     }
@@ -84,7 +82,7 @@ class ChatLogViewModel: ObservableObject {
             .collection(toId)
             .document()
         
-        let messageData = [FirebaseConstants.fromId: fromId, FirebaseConstants.toId: toId, FirebaseConstants.text: self.chatText, "timestamp": Timestamp()] as [String : Any]
+        let messageData = [FirebaseConstants.fromId: fromId, FirebaseConstants.toId: toId, FirebaseConstants.text: self.chatText, FirebaseConstants.timestamp: Timestamp()] as [String : Any]
         
         document.setData(messageData) { error in
             if let error = error {
@@ -92,6 +90,11 @@ class ChatLogViewModel: ObservableObject {
                 return
             }
             print("Successfully saved current user sending message")
+            
+            self.persistRecentMessage()
+            
+            self.chatText = ""
+            self.count += 1
         }
         
         let recipientMessageDocument =
@@ -106,9 +109,46 @@ class ChatLogViewModel: ObservableObject {
                 return
             }
             print("Recipient saved current user sending message")
-            self.chatText = ""
+
         }
     }
+    
+    private func persistRecentMessage() {
+        guard let chatUser = chatUser else { return }
+        
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
+        
+        guard let toId = self.chatUser?.uid else { return }
+        
+        let document = FirebaseManager.shared.firestore
+            .collection("recent_message")
+            .document(uid)
+            .collection("messages")
+            .document(toId)
+        
+        let data = [
+            FirebaseConstants.timestamp: Timestamp(),
+            FirebaseConstants.text: self.chatText,
+            FirebaseConstants.fromId: uid,
+            FirebaseConstants.toId: toId,
+            FirebaseConstants.profileImageUrl: chatUser.profileImageUrl,
+            FirebaseConstants.email: chatUser.email
+        ] as [String: Any]
+        
+        document.setData(data) { error in
+            if let error = error {
+                self.errorMessage = "Failed to saver recent message: \(error)"
+                print("Failed to saver recent message: \(error)")
+                return
+            }
+            
+        }
+    }
+    
+    // Scroll DOWN dialog in the Private Chat
+    @Published var count = 0
+    // Scroll UP dialog in the Private Chat
+    @Published var upChat = 0
 }
 
 struct ChatLogView: View {
@@ -132,44 +172,53 @@ struct ChatLogView: View {
         }
             .navigationTitle(chatUser?.email ?? "")
                 .navigationBarTitleDisplayMode(.inline)
+//                Navigation Bar for personal messages Chat (maybe late "Settings" or "Emoji" will be there.
+                .navigationBarItems(trailing: Button(action: {
+                    vm.upChat += 1
+                }, label: {
+                    Text("Up chat")
+                        .padding(.horizontal)
+                })
+                    .foregroundColor(.white)
+                    .background(Color.gray)
+                    .cornerRadius(5)
+                    .shadow(radius: 5)
+//                    .opacity(0.65)
+                )
 
     }
     
+    static let emptyScrollToString = "Empty"
+    static let upScrollToString = "Up"
+    
     private var messagesView: some View {
         VStack {
-            
                 ScrollView {
-                    ForEach(vm.chatMessages) { message in
+                    // Scroll text dialog in the Private Chat
+                    ScrollViewReader { ScrollViewProxy in
                         VStack {
-                            if message.fromId == FirebaseManager.shared.auth.currentUser?.uid {
-                                HStack {
-                                    Spacer()
-                                    HStack {
-                                        Text(message.text)
-                                            .foregroundColor(.white)
-                                    }
-                                    .padding()
-                                    .background(Color.blue)
-                                    .cornerRadius(15)
-                                }
-                            } else {
-                                HStack {
-                                    HStack {
-                                        Text(message.text)
-                                            .foregroundColor(.black)
-                                    }
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(15)
-                                    Spacer()
-                                }
-
+                            ForEach(vm.chatMessages) { message in
+                                MessageView(message: message)
+                            }
+                            // Scroll UP dialog in the Private Chat
+                            .id(Self.upScrollToString)
+                            HStack { Spacer() }
+                                .id(Self.emptyScrollToString)
+                        }
+                        // Scroll DOWN dialog in the Private Chat
+                        .onReceive(vm.$count) { _ in
+                            withAnimation(.easeOut(duration: 0.5)) {
+                                ScrollViewProxy.scrollTo(Self.emptyScrollToString, anchor: .bottom)
+                            }
+                        }
+                        // Scroll UP dialog in the Private Chat
+                        .onReceive(vm.$upChat) { _ in
+                            withAnimation(.easeOut(duration: 0.5)) {
+                                ScrollViewProxy.scrollTo(Self.upScrollToString, anchor: .bottom)
                             }
                         }
                     }
-                    
-                    HStack { Spacer() }
-                    }
+                }
         }
                 .background(Color(.init(white: 0.96, alpha: 1)))
                 .safeAreaInset(edge: .bottom) {
@@ -208,6 +257,41 @@ struct ChatLogView: View {
     }
 }
 
+struct MessageView: View {
+    
+    let message: ChatMessage
+    
+    var body: some View {
+        VStack {
+            if message.fromId == FirebaseManager.shared.auth.currentUser?.uid {
+                HStack {
+                    Spacer()
+                    HStack {
+                        Text(message.text)
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                }
+                
+            } else {
+                HStack {
+                    HStack {
+                        Text(message.text)
+                            .foregroundColor(.black)
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(20)
+                    Spacer()
+                }
+
+            }
+        }
+    }
+}
+
 private struct DescriptionPlaceholder: View {
     var body: some View {
         HStack {
@@ -224,7 +308,6 @@ private struct DescriptionPlaceholder: View {
 
 struct ChatLogView_Previews: PreviewProvider {
     static var previews: some View {
-
         MainMessagesView()
     }
 }
