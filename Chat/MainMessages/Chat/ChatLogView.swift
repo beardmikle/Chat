@@ -7,22 +7,8 @@
 
 import SwiftUI
 import Firebase
+import FirebaseFirestoreSwift
 
-
-struct ChatMessage: Identifiable {
-    
-    var id: String { documentId }
-    
-    let documentId: String
-    let fromId, toId, text: String
-        
-    init(documentId: String, data: [String: Any]) {
-        self.documentId = documentId
-        self.fromId = data[FirebaseConstants.fromId] as? String ?? ""
-        self.toId = data[FirebaseConstants.toId] as? String ?? ""
-        self.text = data[FirebaseConstants.text] as? String ?? ""
-    }
-}
 
 class ChatLogViewModel: ObservableObject {
     
@@ -59,7 +45,7 @@ class ChatLogViewModel: ObservableObject {
                 querySnapshot?.documentChanges.forEach({ change in
                     if change.type == .added {
                         let data = change.document.data()
-                        self.chatMessages.append(.init(documentId: change.document.documentID, data:data))
+                        self.chatMessages.append(.init(documentId: change.document.documentID, data: data))
                     }
                 })
                 DispatchQueue.main.async {
@@ -82,13 +68,15 @@ class ChatLogViewModel: ObservableObject {
             .collection(toId)
             .document()
         
-        let messageData = [FirebaseConstants.fromId: fromId, FirebaseConstants.toId: toId, FirebaseConstants.text: self.chatText, FirebaseConstants.timestamp: Timestamp()] as [String : Any]
+        let messageData = [FirebaseConstants.fromId: fromId, FirebaseConstants.toId: toId, FirebaseConstants.text: self.chatText, FirebaseConstants.timestamp: Date()] as [String : Any]
         
         document.setData(messageData) { error in
             if let error = error {
+                print(error)
                 self.errorMessage = "Failed to save message into Firestore: \(error)"
                 return
             }
+            
             print("Successfully saved current user sending message")
             
             self.persistRecentMessage()
@@ -97,19 +85,19 @@ class ChatLogViewModel: ObservableObject {
             self.count += 1
         }
         
-        let recipientMessageDocument =
-            FirebaseManager.shared.firestore.collection("messages")
+        let recipientMessageDocument = FirebaseManager.shared.firestore.collection("messages")
             .document(toId)
             .collection(fromId)
             .document()
         
         recipientMessageDocument.setData(messageData) { error in
             if let error = error {
+                print(error)
                 self.errorMessage = "Failed to save message into Firestore: \(error)"
                 return
             }
-            print("Recipient saved current user sending message")
-
+            
+            print("Recipient saved message as well")
         }
     }
     
@@ -127,13 +115,16 @@ class ChatLogViewModel: ObservableObject {
             .document(toId)
         
         let data = [
-            FirebaseConstants.timestamp: Timestamp(),
+//            let timestamp = NSDate().timeIntervalSince1970
+//            FirebaseConstants.timestamp: Timestamp(),
+//            FirebaseConstants.timestamp: Date(),
+            FirebaseConstants.timestamp: Date(),
             FirebaseConstants.text: self.chatText,
             FirebaseConstants.fromId: uid,
             FirebaseConstants.toId: toId,
             FirebaseConstants.profileImageUrl: chatUser.profileImageUrl,
             FirebaseConstants.email: chatUser.email
-        ] as [String: Any]
+        ] as [String : Any]
         
         document.setData(data) { error in
             if let error = error {
