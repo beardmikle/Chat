@@ -57,13 +57,13 @@ class MainMessagesViewModel: ObservableObject {
                         self.recentMessages.remove(at: index)
                     }
                     
-//                    do {
-//                        if let rm = try? change.document.data(as: RecentMessage.self) {
-//                            self.recentMessages.insert(rm, at: 0)
-//                        }
-//                    } catch {
-//                        print(error)
-//                    }
+                    do {
+                        if let rm = try? change.document.data(as: RecentMessage.self) {
+                            self.recentMessages.insert(rm, at: 0)
+                        }
+                    } catch {
+                        print(error)
+                    }
                     
                 })
                 
