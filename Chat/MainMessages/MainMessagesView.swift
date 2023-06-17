@@ -25,25 +25,28 @@ class MainMessagesViewModel: ObservableObject {
             FirebaseManager.shared.auth.currentUser?.uid == nil
         }
         
-    
         fetchCurrentUser()
-        
         fetchRecentMessages()
     }
     
     @Published var recentMessages = [RecentMessage]()
     
-    private func fetchRecentMessages() {
+    private var firestoreListener: ListenerRegistration?
+    
+    func fetchRecentMessages() {
         guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
         
-        FirebaseManager.shared.firestore
-            .collection("recent_message")
+        firestoreListener?.remove()
+        self.recentMessages.removeAll()
+        
+        firestoreListener = FirebaseManager.shared.firestore
+            .collection(FirebaseConstants.recentMessages)
             .document(uid)
-            .collection("messages")
-            .order(by: "timestamp")
+            .collection(FirebaseConstants.messages)
+            .order(by: FirebaseConstants.timestamp)
             .addSnapshotListener { querySnapshot, error in
                 if let error = error {
-                    self.errorMessage = "FAIL! Failed to listen for recent message: \(error)"
+                    self.errorMessage = "Failed to listen for recent messages: \(error)"
                     print(error)
                     return
                 }
@@ -64,9 +67,7 @@ class MainMessagesViewModel: ObservableObject {
                     } catch {
                         print(error)
                     }
-                    
                 })
-                
             }
     }
     
@@ -197,6 +198,7 @@ struct MainMessagesView: View {
             LoginView(didCompleteLoginProcess: {
                 self.vm.isUserCurrentlyLoggedOut = false
                 self.vm.fetchCurrentUser()
+                self.vm.fetchRecentMessages()
             })
         }
         
@@ -224,7 +226,7 @@ struct MainMessagesView: View {
                                 .shadow(radius: 5)
                             
                             VStack(alignment: .leading, spacing: 8) {
-                                Text(recentMessage.email)
+                                Text(recentMessage.username)
                                     .font(.system(size:16, weight: .bold))
                                     .foregroundColor(Color(.label))
                                     .multilineTextAlignment(.leading)
@@ -235,8 +237,8 @@ struct MainMessagesView: View {
                             }
                             
                             Spacer()
-                            
-                            Text(recentMessage.timestamp.description)
+                            //time passed message
+                            Text(recentMessage.timePassed)
                                 .font(.system(size:14, weight: .semibold))
                         }
                         Divider()
@@ -298,6 +300,6 @@ struct MainMessagesView_Previews: PreviewProvider {
 //            dark theme
 //                .preferredColorScheme(.dark)
         
-        MainMessagesView()
+//        MainMessagesView()
     }
 }

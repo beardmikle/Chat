@@ -46,6 +46,7 @@ class ChatLogViewModel: ObservableObject {
                     if change.type == .added {
                         let data = change.document.data()
                         self.chatMessages.append(.init(documentId: change.document.documentID, data: data))
+                        print("Appending chatMessage in ChatLogView")
                     }
                 })
                 DispatchQueue.main.async {

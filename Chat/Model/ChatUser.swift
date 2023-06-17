@@ -7,6 +7,7 @@
 
 import Foundation
 
+
 struct ChatUser: Identifiable {
     var id: String { uid }
     
@@ -18,7 +19,9 @@ struct ChatUser: Identifiable {
         self.email = data["email"] as? String ?? ""
         self.profileImageUrl = data["profileImageUrl"] as? String ?? ""
 
-        let index = email.range(of: "@")?.lowerBound //my version delete email before "@"
-        self.sub = String(email[..<index!]) //delete email after "@"
+        let index = email.range(of: "@")?.lowerBound //delete email symbol "@" and after
+        self.sub = String(email[..<index!]) //delete email symbol "@" and after
     }
 }
+
+
