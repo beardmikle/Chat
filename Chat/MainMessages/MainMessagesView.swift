@@ -17,6 +17,7 @@ class MainMessagesViewModel: ObservableObject {
     
     @Published var errorMessage = ""
     @Published var chatUser: ChatUser?
+    @Published var isUserCurrentlyLoggedOut = false
     
     init() {
         
@@ -72,35 +73,22 @@ class MainMessagesViewModel: ObservableObject {
     }
     
     func fetchCurrentUser() {
-        
-        guard let uid = FirebaseManager.shared.auth.currentUser?.uid
-        else {
-            self.errorMessage = "Coild not find firebase uid"
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else {
+            self.errorMessage = "Could not find firebase uid"
             return
         }
-
-
-        FirebaseManager.shared.firestore.collection("users").document(uid).getDocument { snapshot, error in if let error = error {
+        
+        FirebaseManager.shared.firestore.collection("users").document(uid).getDocument { snapshot, error in
+            if let error = error {
                 self.errorMessage = "Failed to fetch current user: \(error)"
-                print("Failed to fetch current user. Error log:", error)
+                print("Failed to fetch current user:", error)
                 return
-            
-        }
-            
-            guard let data = snapshot?.data() else {
-                self.errorMessage = "No data found"
-                return
-                
-            }
-
-            self.chatUser = .init(data: data)
-            
-
             }
             
+            self.chatUser = try? snapshot?.data(as: ChatUser.self)
+            FirebaseManager.shared.currentUser = self.chatUser
         }
-
-    @Published var isUserCurrentlyLoggedOut =  false
+    }
     
     func handleSignOut() {
         isUserCurrentlyLoggedOut.toggle()
@@ -118,6 +106,8 @@ struct MainMessagesView: View {
     
     @ObservedObject private var vm = MainMessagesViewModel()
     
+    private var chatLogViewModel = ChatLogViewModel(chatUser: nil)
+    
     var body: some View {
 //        NavigationLink {
     
@@ -125,7 +115,7 @@ struct MainMessagesView: View {
             
             VStack {
                 customNavBar
-                messageView
+                messagesView
                 
 //                NavigationLink("", isActive: $shouldNavigateToChatLogView) {
 //                    ChatLogView(chatUser: self.chatUser)
@@ -159,9 +149,9 @@ struct MainMessagesView: View {
             //                .foregroundColor(Color(.systemGreen))
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(vm.chatUser?.sub ?? "")")
+                let email = vm.chatUser?.email.replacingOccurrences(of: "@gmail.com", with: "") ?? ""
+                Text(email)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(Color(.systemGreen))
                 
                 HStack {
                     Circle()
@@ -201,33 +191,36 @@ struct MainMessagesView: View {
                 self.vm.fetchRecentMessages()
             })
         }
-        
     }
     
-    private var messageView: some View {
+    private var messagesView: some View {
         ScrollView {
             ForEach(vm.recentMessages) { recentMessage in
-                
-                NavigationLink {
-                    Text("Destination")
-                    
-                } label: {
-                    VStack {
+                VStack {
+                    Button {
+                        let uid = FirebaseManager.shared.auth.currentUser?.uid == recentMessage.fromId ? recentMessage.toId : recentMessage.fromId
+                        
+                        self.chatUser = .init(id: uid, uid: uid, email: recentMessage.email, profileImageUrl: recentMessage.profileImageUrl)
+                        
+                        self.chatLogViewModel.chatUser = self.chatUser
+                        self.chatLogViewModel.fetchMessages()
+                        self.shouldNavigateToChatLogView.toggle()
+                    } label: {
                         HStack(spacing: 16) {
                             WebImage(url: URL(string: recentMessage.profileImageUrl))
                                 .resizable()
-                                .scaledToFit()
+                                .scaledToFill()
                                 .frame(width: 64, height: 64)
                                 .clipped()
                                 .cornerRadius(64)
-                                .padding(.top, 1)
                                 .overlay(RoundedRectangle(cornerRadius: 64)
-                                    .stroke(Color.blue, lineWidth: 1))
+                                            .stroke(Color.black, lineWidth: 1))
                                 .shadow(radius: 5)
+                            
                             
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(recentMessage.username)
-                                    .font(.system(size:16, weight: .bold))
+                                    .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(Color(.label))
                                     .multilineTextAlignment(.leading)
                                 Text(recentMessage.text)
@@ -235,7 +228,6 @@ struct MainMessagesView: View {
                                     .foregroundColor(Color(.darkGray))
                                     .multilineTextAlignment(.leading)
                             }
-                            
                             Spacer()
                             //time passed message
                             Text(recentMessage.timePassed)
@@ -253,12 +245,12 @@ struct MainMessagesView: View {
     }
         
     
-    @State var shouldShowNewMeassage = false
+    @State var shouldShowNewMessageScreen = false
     
     private var newMessageButton: some View {
         Button {
             
-            shouldShowNewMeassage.toggle()
+            shouldShowNewMessageScreen.toggle()
             
         } label: {
             HStack {
@@ -274,20 +266,18 @@ struct MainMessagesView: View {
             .padding(.horizontal)
             .shadow(radius: 15)
         }
-        .fullScreenCover(isPresented: $shouldShowNewMeassage) {
-            // NAVIGATION
-            CreateNewMessageView(didSelectNewUser: {
-                user in
+        .fullScreenCover(isPresented: $shouldShowNewMessageScreen) {
+            CreateNewMessageView(didSelectNewUser: { user in
                 print(user.email)
-                // NAVIGATION TOGGLE
                 self.shouldNavigateToChatLogView.toggle()
                 self.chatUser = user
+                self.chatLogViewModel.chatUser = user
+                self.chatLogViewModel.fetchMessages()
             })
-            
         }
     }
-        
-        @State var chatUser: ChatUser?
+    
+    @State var chatUser: ChatUser?
 }
     
 
@@ -295,11 +285,9 @@ struct MainMessagesView: View {
 
 struct MainMessagesView_Previews: PreviewProvider {
     static var previews: some View {
+        MainMessagesView()
+            .preferredColorScheme(.dark)
         
         MainMessagesView()
-//            dark theme
-//                .preferredColorScheme(.dark)
-        
-//        MainMessagesView()
     }
 }
