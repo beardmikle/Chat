@@ -31,7 +31,7 @@ class MainMessagesViewModel: ObservableObject {
     
     @Published var recentMessages = [RecentMessage]()
     
-    private var firestoreListener: ListenerRegistration?
+    var firestoreListener: ListenerRegistration?
     
     func fetchRecentMessages() {
         guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
@@ -39,7 +39,7 @@ class MainMessagesViewModel: ObservableObject {
         firestoreListener?.remove()
         self.recentMessages.removeAll()
         
-        firestoreListener = FirebaseManager.shared.firestore
+        FirebaseManager.shared.firestore
             .collection(FirebaseConstants.recentMessages)
             .document(uid)
             .collection(FirebaseConstants.messages)
