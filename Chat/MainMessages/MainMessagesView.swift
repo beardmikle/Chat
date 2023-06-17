@@ -31,7 +31,7 @@ class MainMessagesViewModel: ObservableObject {
     
     @Published var recentMessages = [RecentMessage]()
     
-    var firestoreListener: ListenerRegistration?
+    private var firestoreListener: ListenerRegistration?
     
     func fetchRecentMessages() {
         guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
@@ -39,11 +39,11 @@ class MainMessagesViewModel: ObservableObject {
         firestoreListener?.remove()
         self.recentMessages.removeAll()
         
-        FirebaseManager.shared.firestore
-            .collection(FirebaseConstants.recentMessages)
+        firestoreListener = FirebaseManager.shared.firestore
+            .collection("recent_message")
             .document(uid)
-            .collection(FirebaseConstants.messages)
-            .order(by: FirebaseConstants.timestamp)
+            .collection("messages")
+            .order(by: "timestamp")
             .addSnapshotListener { querySnapshot, error in
                 if let error = error {
                     self.errorMessage = "Failed to listen for recent messages: \(error)"
