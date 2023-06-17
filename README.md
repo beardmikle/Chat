@@ -11,6 +11,7 @@ Application with chat features. Uses features such as:
 - import FirebaseAuth
 - import FirebaseFirestore
 - import SDWebImageSwiftUI
+- import FirebaseFirestoreSwift
 
 
 Some screenshots:
