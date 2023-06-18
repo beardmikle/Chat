@@ -19,6 +19,7 @@ class MainMessagesViewModel: ObservableObject {
     @Published var chatUser: ChatUser?
     @Published var isUserCurrentlyLoggedOut = false
     
+    
     init() {
         
         DispatchQueue.main.async {
@@ -29,6 +30,7 @@ class MainMessagesViewModel: ObservableObject {
         fetchCurrentUser()
         fetchRecentMessages()
     }
+    
     
     @Published var recentMessages = [RecentMessage]()
     
@@ -149,7 +151,8 @@ struct MainMessagesView: View {
             //                .foregroundColor(Color(.systemGreen))
             
             VStack(alignment: .leading, spacing: 4) {
-                let email = vm.chatUser?.email.replacingOccurrences(of: "@gmail.com", with: "") ?? ""
+                
+                let email = vm.chatUser?.email.components(separatedBy: "@").first ?? ""
                 Text(email)
                     .font(.system(size: 24, weight: .bold))
                 
