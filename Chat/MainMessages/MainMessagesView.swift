@@ -19,7 +19,6 @@ class MainMessagesViewModel: ObservableObject {
     @Published var chatUser: ChatUser?
     @Published var isUserCurrentlyLoggedOut = false
     
-    
     init() {
         
         DispatchQueue.main.async {
@@ -30,7 +29,6 @@ class MainMessagesViewModel: ObservableObject {
         fetchCurrentUser()
         fetchRecentMessages()
     }
-    
     
     @Published var recentMessages = [RecentMessage]()
     
@@ -123,7 +121,7 @@ struct MainMessagesView: View {
 //                    ChatLogView(chatUser: self.chatUser)
                 
             } .navigationDestination(isPresented: $shouldNavigateToChatLogView) {
-                    ChatLogView(chatUser: self.chatUser)
+                    ChatLogView(vm: chatLogViewModel )
                 
             }
             .overlay(
@@ -151,8 +149,7 @@ struct MainMessagesView: View {
             //                .foregroundColor(Color(.systemGreen))
             
             VStack(alignment: .leading, spacing: 4) {
-                
-                let email = vm.chatUser?.email.components(separatedBy: "@").first ?? ""
+                let email = vm.chatUser?.email.replacingOccurrences(of: "@gmail.com", with: "") ?? ""
                 Text(email)
                     .font(.system(size: 24, weight: .bold))
                 
@@ -233,7 +230,7 @@ struct MainMessagesView: View {
                             }
                             Spacer()
                             //time passed message
-                            Text(recentMessage.timePassed)
+                            Text(recentMessage.timeAgo)
                                 .font(.system(size:14, weight: .semibold))
                         }
                         Divider()
@@ -294,3 +291,4 @@ struct MainMessagesView_Previews: PreviewProvider {
         MainMessagesView()
     }
 }
+

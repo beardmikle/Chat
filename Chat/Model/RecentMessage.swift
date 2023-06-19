@@ -20,9 +20,9 @@ struct RecentMessage: Codable, Identifiable {
         email.components(separatedBy: "@").first ?? email
     }
     
-    var timePassed: String {
+    var timeAgo: String {
         let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
+        formatter.unitsStyle = .short
         return formatter.localizedString(for: timestamp, relativeTo: Date())
         
         

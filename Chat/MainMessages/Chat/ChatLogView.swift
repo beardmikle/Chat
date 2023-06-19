@@ -24,13 +24,14 @@ class ChatLogViewModel: ObservableObject {
         
         fetchMessages()
     }
+    var firestoreListener: ListenerRegistration?
     
     func fetchMessages() {
         guard let fromId = FirebaseManager.shared.auth.currentUser?.uid else { return }
         
         guard let toId = chatUser?.uid else { return }
         
-        FirebaseManager.shared.firestore
+        firestoreListener = FirebaseManager.shared.firestore
             .collection("messages")
             .document(fromId)
             .collection(toId)
@@ -46,7 +47,7 @@ class ChatLogViewModel: ObservableObject {
                     if change.type == .added {
                         let data = change.document.data()
                         self.chatMessages.append(.init(documentId: change.document.documentID, data: data))
-                        print("Appending chatMessage in ChatLogView")
+                        print("Appending chatMessage in ChatLogView \(Date())")
                     }
                 })
                 DispatchQueue.main.async {
@@ -146,13 +147,13 @@ class ChatLogViewModel: ObservableObject {
 struct ChatLogView: View {
     
     
-    let chatUser: ChatUser?
-    
-    init(chatUser: ChatUser?) {
-        self.chatUser = chatUser
-        self.vm = .init(chatUser: chatUser)
-    }
-    
+//    let chatUser: ChatUser?
+//
+//    init(chatUser: ChatUser?) {
+//        self.chatUser = chatUser
+//        self.vm = .init(chatUser: chatUser)
+//    }
+//
     
     @ObservedObject var vm: ChatLogViewModel
     
@@ -162,8 +163,11 @@ struct ChatLogView: View {
             messagesView
             Text(vm.errorMessage)
         }
-            .navigationTitle(chatUser?.email ?? "")
+        .navigationTitle(vm.chatUser?.email ?? "")
                 .navigationBarTitleDisplayMode(.inline)
+                .onDisappear {
+                    vm.firestoreListener?.remove()
+                }
 //                Navigation Bar for personal messages Chat (maybe late "Settings" or "Emoji" will be there.
                 .navigationBarItems(trailing: Button(action: {
                     vm.upChat += 1
