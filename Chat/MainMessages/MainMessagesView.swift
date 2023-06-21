@@ -22,11 +22,11 @@ class MainMessagesViewModel: ObservableObject {
     init() {
         
         DispatchQueue.main.async {
-            self.isUserCurrentlyLoggedOut =
-            FirebaseManager.shared.auth.currentUser?.uid == nil
+            self.isUserCurrentlyLoggedOut = FirebaseManager.shared.auth.currentUser?.uid == nil
         }
         
         fetchCurrentUser()
+        
         fetchRecentMessages()
     }
     
@@ -41,10 +41,10 @@ class MainMessagesViewModel: ObservableObject {
         self.recentMessages.removeAll()
         
         firestoreListener = FirebaseManager.shared.firestore
-            .collection("recent_message")
+            .collection(FirebaseConstants.recentMessages)
             .document(uid)
-            .collection("messages")
-            .order(by: "timestamp")
+            .collection(FirebaseConstants.messages)
+            .order(by: FirebaseConstants.timestamp)
             .addSnapshotListener { querySnapshot, error in
                 if let error = error {
                     self.errorMessage = "Failed to listen for recent messages: \(error)"
@@ -286,9 +286,10 @@ struct MainMessagesView: View {
 struct MainMessagesView_Previews: PreviewProvider {
     static var previews: some View {
         MainMessagesView()
-            .preferredColorScheme(.dark)
+            .preferredColorScheme(.light)
         
         MainMessagesView()
+            .preferredColorScheme(.light)
     }
 }
 
