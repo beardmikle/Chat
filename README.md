@@ -16,7 +16,6 @@ Application with chat features. Uses features such as:
 
 Screenshots:
 -----------------
-![1](https://github.com/beardmikle/Chat/assets/11380960/dd0ec7f9-da78-474e-92ef-cc6c990a7a28)
 ![2](https://github.com/beardmikle/Chat/assets/11380960/ac33e422-6182-44ec-ab5f-7554944ec55a)
 ![3](https://github.com/beardmikle/Chat/assets/11380960/94f45792-4408-4599-b107-109d57a7adf6)
 ![4](https://github.com/beardmikle/Chat/assets/11380960/01d4fb00-b193-4ed6-9990-b64db5a35566)
